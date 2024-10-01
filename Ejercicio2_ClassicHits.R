@@ -1,5 +1,6 @@
 library(dplyr)
 library(ggplot2)
+library(reshape2) 
 
 setwd("C:\\Users\\Rodrigo\\Documents\\Bootcamp AI\\Git\\Ejercicios_Curso_ML")
 
@@ -122,8 +123,51 @@ ggplot(generos_decada, aes(x = decada, y = promedio_popularidad, color = genre))
   theme_minimal() +
   theme(text = element_text(size = 12)) 
 
+# Crear el gráfico de cajas
+ggplot(generos_decada, aes(x = genre, y = promedio_popularidad, fill = genre)) +
+  geom_boxplot() +
+  labs(title = "Distribución de la Popularidad por Género",
+       x = "Género",
+       y = "Popularidad") +
+  theme_minimal() +
+  theme(text = element_text(size = 12)) 
 
+#qué hace popular una canción
 
+canciones_mas_populares = subset(classics, popularity >= 70)
 
+features <- c('danceability', 'energy', 'acousticness', 'instrumentalness', 'valence')
 
+# Configurar la ventana gráfica para mostrar múltiples gráficos
+par(mfrow = c(3, 2), mar = c(4, 4, 2, 1))
 
+# Crear los histogramas para cada característica
+for (feature in features) {
+  hist(canciones_mas_populares[[feature]], 
+       main = paste("Distribución de", feature),
+       xlab = feature,
+       col = "lightblue", 
+       border = "black", 
+       breaks = 30)
+  
+  # Añadir la densidad (KDE) al histograma
+  dens <- density(canciones_mas_populares[[feature]], na.rm = TRUE)
+  lines(dens, col = "red", lwd = 2)
+}
+
+#matriz de correlacion
+
+# Calcular la matriz de correlación
+correlation <- cor(canciones_mas_populares[, features], use = "complete.obs")
+
+correlation_melt <- melt(correlation)
+
+# Crear el heatmap con ggplot2
+ggplot(data = correlation_melt, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(color = "white") +  # Crear las celdas del heatmap
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1, 1), space = "Lab", 
+                       name = "Correlación") +  # Colores personalizados
+  theme_minimal() +  # Aplicar un tema limpio
+  labs(title = "Matriz de Correlación", x = "Características", y = "Características") +
+  geom_text(aes(label = sprintf("%.2f", value)), color = "black", size = 4)  
